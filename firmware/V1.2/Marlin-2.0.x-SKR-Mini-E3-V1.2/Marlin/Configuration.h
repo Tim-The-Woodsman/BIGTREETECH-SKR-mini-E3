@@ -744,7 +744,7 @@
  *                                      X, Y, Z, E0 [, E1[, E2[, E3[, E4[, E5]]]]]
  */
 // bvogt -> max acceleration on marlin 1.1.9 (self) -> { 1000, 1000, 100, 5000 }
-#define DEFAULT_MAX_ACCELERATION      { 500, 500, 100, 5000 }
+#define DEFAULT_MAX_ACCELERATION      { 500, 500, 100, 120 }
 
 //#define LIMITED_MAX_ACCEL_EDITING     // Limit edit via M201 or LCD to DEFAULT_MAX_ACCELERATION * 2
 #if ENABLED(LIMITED_MAX_ACCEL_EDITING)
@@ -931,7 +931,7 @@
  *
  * Specify a Probe position as { X, Y, Z }
  */
-#define NOZZLE_TO_PROBE_OFFSET { -36, -3, -2.75 }
+#define NOZZLE_TO_PROBE_OFFSET { -36, -3, -3 }
 
 // Certain types of probes need to stay away from edges
 #define MIN_PROBE_EDGE 15
