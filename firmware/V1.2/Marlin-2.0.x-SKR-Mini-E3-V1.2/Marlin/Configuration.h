@@ -72,6 +72,7 @@
 
 // Author info of this build printed to the host during boot and M115
 #define STRING_CONFIG_H_AUTHOR "(Ben!)" // Who made the changes.
+//#define CUSTOM_VERSION_FILE Version.h // Path from the root directory (no quotes)
 
 /**
  * *** VENDORS PLEASE READ ***
@@ -351,9 +352,10 @@
  *
  * Temperature sensors available:
  *
+ *    -5 : PT100 / PT1000 with MAX31865 (only for sensors 0-1)
+ *    -3 : thermocouple with MAX31855 (only for sensors 0-1)
+ *    -2 : thermocouple with MAX6675 (only for sensors 0-1)
  *    -4 : thermocouple with AD8495
- *    -3 : thermocouple with MAX31855 (only for sensor 0)
- *    -2 : thermocouple with MAX6675 (only for sensor 0)
  *    -1 : thermocouple with AD595
  *     0 : not used
  *     1 : 100k thermistor - best choice for EPCOS 100k (4.7k pullup)
@@ -383,6 +385,7 @@
  *    67 : 450C thermistor from SliceEngineering
  *    70 : the 100K thermistor found in the bq Hephestos 2
  *    75 : 100k Generic Silicon Heat Pad with NTC 100K MGB18-104F39050L32 thermistor
+ *    99 : 100k thermistor with a 10K pull-up resistor (found on some Wanhao i3 machines)
  *
  *       1k ohm pullup tables - This is atypical, and requires changing out the 4.7k pullup for 1k.
  *                              (but gives greater accuracy and more stable PID)
@@ -400,8 +403,6 @@
  *         Use these for Testing or Development purposes. NEVER for production machine.
  *   998 : Dummy Table that ALWAYS reads 25°C or the temperature defined below.
  *   999 : Dummy Table that ALWAYS reads 100°C or the temperature defined below.
- *
- * :{ '0':"Not used", '1':"100k / 4.7k - EPCOS", '331':"(3.3V thermistor 1)", '2':"200k / 4.7k - ATC Semitec 204GT-2", '3':"Mendel-parts / 4.7k", '4':"10k !! do not use for a hotend. Bad resolution at high temp. !!", '5':"100K / 4.7k - ATC Semitec 104GT-2 (Used in ParCan & J-Head)", '501':"100K Zonestar (Tronxy X3A)", '512':"100k RPW-Ultra hotend thermistor", '6':"100k / 4.7k EPCOS - Not as accurate as Table 1", '7':"100k / 4.7k Honeywell 135-104LAG-J01", '8':"100k / 4.7k 0603 SMD Vishay NTCS0603E3104FXT", '9':"100k / 4.7k GE Sensing AL03006-58.2K-97-G1", '10':"100k / 4.7k RS 198-961", '11':"100k / 4.7k beta 3950 1%", '12':"100k / 4.7k 0603 SMD Vishay NTCS0603E3104FXT (calibrated for Makibox hot bed)", '13':"100k Hisens 3950  1% up to 300°C for hotend 'Simple ONE ' & hotend 'All In ONE'", '18':"ATC Semitec 204GT-2 (4.7k pullup) Dagoma.Fr - MKS_Base_DKU001327" '20':"Pt100 (Ultimainboard V2.x)", '201':"Pt100 (Overlord)", '51':"100k / 1k - EPCOS", '52':"200k / 1k - ATC Semitec 204GT-2", '55':"100k / 1k - ATC Semitec 104GT-2 (Used in ParCan & J-Head)", '60':"100k Maker's Tool Works Kapton Bed Thermistor beta=3950", '61':"100k Formbot / Vivedino 3950 350C thermistor 4.7k pullup", '66':"Dyze Design 4.7M High Temperature thermistor", '67':"Slice Engineering 450C High Temperature thermistor", '70':"the 100K thermistor found in the bq Hephestos 2", '71':"100k / 4.7k Honeywell 135-104LAF-J01", '147':"Pt100 / 4.7k", '1047':"Pt1000 / 4.7k", '110':"Pt100 / 1k (non-standard)", '1010':"Pt1000 / 1k (non standard)", '-4':"Thermocouple + AD8495", '-3':"Thermocouple + MAX31855 (only for sensor 0)", '-2':"Thermocouple + MAX6675 (only for sensor 0)", '-1':"Thermocouple + AD595", '998':"Dummy 1", '999':"Dummy 2", '1000':"Custom thermistor params" }
  */
 // bvogt -> e3d v6
 #define TEMP_SENSOR_0 5
@@ -474,24 +475,9 @@
 
   // If you are using a pre-configured hotend then you can use one of the value sets by uncommenting it
   // Igor the CR-10S
-  #define DEFAULT_Kp 83.88
-  #define DEFAULT_Ki 7.93
-  #define DEFAULT_Kd 221.90
-
-  // Ultimaker
-  //#define DEFAULT_Kp 22.2
-  //#define DEFAULT_Ki 1.08
-  //#define DEFAULT_Kd 114
-
-  // MakerGear
-  //#define DEFAULT_Kp 7.0
-  //#define DEFAULT_Ki 0.1
-  //#define DEFAULT_Kd 12
-
-  // Mendel Parts V9 on 12V
-  //#define DEFAULT_Kp 63.0
-  //#define DEFAULT_Ki 2.25
-  //#define DEFAULT_Kd 440
+  #define DEFAULT_Kp 27.76
+  #define DEFAULT_Ki 2.04
+  #define DEFAULT_Kd 94.58
 
 #endif // PIDTEMP
 
@@ -719,7 +705,7 @@
 /**
  * Default Axis Steps Per Unit (steps/mm)
  * Override with M92
- *                                      X, Y, Z, E0 [, E1[, E2[, E3[, E4[, E5]]]]]
+ *                                      X, Y, Z, E0 [, E1[, E2...]]
  */
 // bvogt -> changed e-steps from 93 to 5455 for the nimble
 #define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 400, 5455 }
@@ -727,7 +713,7 @@
 /**
  * Default Max Feed Rate (mm/s)
  * Override with M203
- *                                      X, Y, Z, E0 [, E1[, E2[, E3[, E4[, E5]]]]]
+ *                                      X, Y, Z, E0 [, E1[, E2...]]
  */
 // bvogt -> max feedrates on marlin 1.1.9 (self) -> { 2500, 2500, 100, 50 }
 #define DEFAULT_MAX_FEEDRATE          { 1500, 1500, 10, 50 }
@@ -741,7 +727,7 @@
  * Default Max Acceleration (change/s) change = mm/s
  * (Maximum start speed for accelerated moves)
  * Override with M201
- *                                      X, Y, Z, E0 [, E1[, E2[, E3[, E4[, E5]]]]]
+ *                                      X, Y, Z, E0 [, E1[, E2...]]
  */
 // bvogt -> max acceleration on marlin 1.1.9 (self) -> { 1000, 1000, 100, 5000 }
 #define DEFAULT_MAX_ACCELERATION      { 500, 500, 100, 120 }
@@ -786,7 +772,7 @@
   #endif
 #endif
 
-// bvogt -> changed from 5.0 to 0.6 due to the drive shaft. 
+// bvogt -> changed from 5.0 to 0.6 due to the drive shaft.
 #define DEFAULT_EJERK    0.6  // May be used by Linear Advance
 
 /**
@@ -934,7 +920,7 @@
 #define NOZZLE_TO_PROBE_OFFSET { -36, -3, -3 }
 
 // Certain types of probes need to stay away from edges
-#define MIN_PROBE_EDGE 15
+#define MIN_PROBE_EDGE 10
 
 // X and Y axis travel speed (mm/m) between probes
 #define XY_PROBE_SPEED 8000
@@ -943,7 +929,7 @@
 #define Z_PROBE_SPEED_FAST HOMING_FEEDRATE_Z
 
 // Feedrate (mm/m) for the "accurate" probe of each point
-#define Z_PROBE_SPEED_SLOW HOMING_FEEDRATE_Z // (Z_PROBE_SPEED_FAST / 2)
+#define Z_PROBE_SPEED_SLOW (Z_PROBE_SPEED_FAST / 2)
 
 /**
  * Multiple Probing
@@ -1025,7 +1011,7 @@
 // @section extruder
 
 #define DISABLE_E false             // For all extruders
-//#define DISABLE_INACTIVE_EXTRUDER // Keep only the active extruder enabled
+//#define DISABLE_INACTIVE_EXTRUDER   // Keep only the active extruder enabled
 
 // @section machine
 
@@ -1220,7 +1206,7 @@
 #if EITHER(AUTO_BED_LEVELING_LINEAR, AUTO_BED_LEVELING_BILINEAR)
 
   // Set the number of grid points per dimension.
-  #define GRID_MAX_POINTS_X 7
+  #define GRID_MAX_POINTS_X 5
   #define GRID_MAX_POINTS_Y GRID_MAX_POINTS_X
 
   // Probe along the Y axis, advancing X after each column
@@ -1230,7 +1216,7 @@
 
     // Beyond the probed grid, continue the implied tilt?
     // Default is to maintain the height of the nearest edge.
-    //#define EXTRAPOLATE_BEYOND_GRID
+    #define EXTRAPOLATE_BEYOND_GRID
 
     //
     // Experimental Subdivision of the grid by Catmull-Rom method.
@@ -1285,7 +1271,7 @@
 #if ENABLED(LCD_BED_LEVELING)
   #define MESH_EDIT_Z_STEP  0.025 // (mm) Step size while manually probing Z axis.
   #define LCD_PROBE_Z_RANGE 4     // (mm) Z Range centered on Z_MIN_POS for LCD Z adjustment
-  //#define MESH_EDIT_MENU        // Add a menu to edit mesh points
+  #define MESH_EDIT_MENU        // Add a menu to edit mesh points
 #endif
 
 // Add a menu item to move between bed corners for manual bed adjustment
@@ -1415,7 +1401,7 @@
 //#define DISABLE_M503        // Saves ~2700 bytes of PROGMEM. Disable for release!
 #define EEPROM_CHITCHAT       // Give feedback on EEPROM commands. Disable to save PROGMEM.
 #if ENABLED(EEPROM_SETTINGS)
-  //#define EEPROM_AUTO_INIT  // Init EEPROM automatically on any errors.
+  #define EEPROM_AUTO_INIT  // Init EEPROM automatically on any errors.
 #endif
 
 //
@@ -1449,12 +1435,12 @@
 #define PREHEAT_1_LABEL       "PLA"
 #define PREHEAT_1_TEMP_HOTEND 195
 #define PREHEAT_1_TEMP_BED     55
-#define PREHEAT_1_FAN_SPEED    77 // Value from 0 to 255
+#define PREHEAT_1_FAN_SPEED    0 // Value from 0 to 255
 
 #define PREHEAT_2_LABEL       "PETG"
 #define PREHEAT_2_TEMP_HOTEND 225
 #define PREHEAT_2_TEMP_BED     60
-#define PREHEAT_2_FAN_SPEED    77 // Value from 0 to 255
+#define PREHEAT_2_FAN_SPEED    0 // Value from 0 to 255
 
 /**
  * Nozzle Park
@@ -1570,7 +1556,7 @@
  *
  * View the current statistics with M78.
  */
-//#define PRINTCOUNTER
+#define PRINTCOUNTER
 
 //=============================================================================
 //============================= LCD and SD support ============================
@@ -1645,7 +1631,7 @@
  *
  * Use CRC checks and retries on the SD communication.
  */
-//#define SD_CHECK_AND_RETRY
+#define SD_CHECK_AND_RETRY
 
 /**
  * LCD Menu Items
@@ -1708,7 +1694,7 @@
 //
 // Add individual axis homing items (Home X, Home Y, and Home Z) to the LCD menu.
 //
-//#define INDIVIDUAL_AXIS_HOMING_MENU
+#define INDIVIDUAL_AXIS_HOMING_MENU
 
 //
 // SPEAKER/BUZZER
@@ -2038,10 +2024,10 @@
 //#define MALYAN_LCD
 
 //
-// LulzBot Color Touch UI for FTDI EVE (FT800/FT810) displays
+// Touch UI for FTDI EVE (FT800/FT810) displays
 // See Configuration_adv.h for all configuration options.
 //
-//#define LULZBOT_TOUCH_UI
+//#define TOUCH_UI_FTDI_EVE
 
 //
 // Third-party or vendor-customized controller interfaces.
@@ -2164,13 +2150,13 @@
 #endif
 
 // Support for Adafruit Neopixel LED driver
-//#define NEOPIXEL_LED
+// #define NEOPIXEL_LED
 #if ENABLED(NEOPIXEL_LED)
   #define NEOPIXEL_TYPE   NEO_GRB // NEO_GRBW / NEO_GRB - four/three channel driver type (defined in Adafruit_NeoPixel.h)
   //#define NEOPIXEL_PIN     4       // LED driving pin
   //#define NEOPIXEL2_TYPE NEOPIXEL_TYPE
   //#define NEOPIXEL2_PIN    5
-  #define NEOPIXEL_PIXELS 3       // Number of LEDs in the strip, larger of 2 strips if 2 neopixel strips are used
+  #define NEOPIXEL_PIXELS 4       // Number of LEDs in the strip, larger of 2 strips if 2 neopixel strips are used
   #define NEOPIXEL_IS_SEQUENTIAL   // Sequential display for temperature change - LED by LED. Disable to change all LEDs at once.
   #define NEOPIXEL_BRIGHTNESS 127  // Initial brightness (0-255)
   #define NEOPIXEL_STARTUP_TEST  // Cycle through colors at startup
